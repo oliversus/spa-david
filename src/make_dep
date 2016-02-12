@@ -1,0 +1,19 @@
+enkf.o:		enkf_declarations.o scale_declarations.o math_tools.o all_declarations.o enkf_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o enkf.f90
+enkf_declarations.o:		enkf_declarations.f90
+all_declarations.o:		scale_declarations.o all_declarations.f90
+allocate_carbon.o:		all_declarations.o scale_declarations.o all_declarations.o spa_io.o all_declarations.o enkf.o math_tools.o allocate_carbon.f90
+canopy.o:		allocate_carbon.o all_declarations.o all_declarations.o leaf.o light.o all_declarations.o scale_declarations.o soil_air.o soil_functions.o all_declarations.o all_declarations.o enkf.o all_declarations.o canopy.f90
+config_tools.o:		scale_declarations.o log_tools.o config_tools.f90
+leaf.o:		scale_declarations.o math_tools.o all_declarations.o all_declarations.o all_declarations.o spa_io.o all_declarations.o enkf.o log_tools.o leaf.f90
+light.o:		scale_declarations.o all_declarations.o all_declarations.o spa_io.o all_declarations.o light.f90
+log_tools.o:		log_tools.f90
+main.o:		allocate_carbon.o canopy.o log_tools.o scale_declarations.o spa_io.o spa_io_csv.o enkf.o all_declarations.o soil_functions.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o math_tools.o main.f90
+math_tools.o:		scale_declarations.o log_tools.o math_tools.f90
+scale_declarations.o:		scale_declarations.f90
+soil_air.o:		all_declarations.o scale_declarations.o all_declarations.o all_declarations.o all_declarations.o enkf.o all_declarations.o math_tools.o log_tools.o soil_air.f90
+soil_functions.o:		all_declarations.o math_tools.o scale_declarations.o all_declarations.o log_tools.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o enkf.o all_declarations.o all_declarations.o soil_air.o spa_io.o enkf_declarations.o soil_functions.f90
+spa_cmd_line.o:		log_tools.o scale_declarations.o spa_cmd_line.f90
+spa_config.o:		scale_declarations.o config_tools.o log_tools.o all_declarations.o all_declarations.o spa_config.f90
+spa_initialise.o:		all_declarations.o all_declarations.o scale_declarations.o soil_air.o all_declarations.o all_declarations.o enkf.o math_tools.o config_tools.o log_tools.o spa_cmd_line.o spa_config.o spa_io_csv.o spa_initialise.f90
+spa_io.o:		scale_declarations.o log_tools.o enkf_declarations.o config_tools.o spa_cmd_line.o spa_config.o spa_initialise.o spa_io_csv.o enkf.o all_declarations.o all_declarations.o all_declarations.o spa_io.f90
+spa_io_csv.o:		scale_declarations.o enkf.o log_tools.o all_declarations.o all_declarations.o all_declarations.o all_declarations.o enkf_declarations.o all_declarations.o all_declarations.o all_declarations.o math_tools.o all_declarations.o all_declarations.o spa_io_csv.f90
