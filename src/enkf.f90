@@ -14,10 +14,10 @@ module enkf
   integer            :: switch						! 0=fitting parameters, 1=final filter
   integer            :: smooth = 0						! 0=no smooth, 1=smoothing
   integer            :: outon							! 0=low output, 1=high output
-  logical            :: forward       = .true.	! 0=assimilation, 1=forward run
+  logical            :: forward       = .false.	! 0=assimilation, 1=forward run
   logical            :: obserr_abs    = .true.  ! errors on obs absolute or percentual?
   logical            :: spurious_flag = .false. ! account for spurious correlation effects?
-  logical            :: modvarswitch  = .false. ! add model uncertainty?
+  logical            :: modvarswitch  = .true. ! add model uncertainty?
   logical            :: below_frac    = .false. ! belowground resistance a (fixed) fraction of total (i.e. below- + aboveground) resistance?
   logical            :: inflate_flag  = .false. ! inflate model parameters?
   logical            :: parallel_flag = .false. ! code parallelization activated?
@@ -85,13 +85,13 @@ subroutine enkf_calcs ( A , B , time , hbase )
 
   av = sum( A , dim = 2 ) / real( nrens )
 
-  call errors( sigma2 , measvar ,av )
+  !call errors( sigma2 , measvar ,av )
 
-  if ( time%steps_count .eq. 1) iseed = (/213,896,1862,3855/)
+  if ( time%steps_count .eq. 1) iseed = (/213,876,1962,3755/)
 
   !Read the ensemble forecast into A (matrix holding ensemble members)
   do i = 1 , ndim
-    call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+    !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
     do k = 1 , nrens
       sigma = sqrt( sigma2( i ) )
       A( i , k ) = A( i , k ) + sqrt( dt ) * sigma * rho * R( k ) * modvarflag
@@ -113,13 +113,14 @@ subroutine enkf_calcs ( A , B , time , hbase )
   exist = maxval( baseobs )  !are there any obs?
   if (exist.le.0.) exist = -999.
   if (forward) exist = -999.
+  if (time%day.le.60) exist = -999.
   !if (exist < 0.005) exist = -999. ! don't assimilate potentially biased synthetic data
   !if (par_top .lt. 1. ) exist = -999. ! no nighttime assimilation
 
 ! If there are observations for this timestep....
   if ( exist .gt. -999. ) then
 
-    call varobs( maxobs , nrobs ) ! determine number of observations this timestep
+    !call varobs( maxobs , nrobs ) ! determine number of observations this timestep
 
     if (spurious_flag) n_analysis = 2
 
@@ -136,7 +137,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     allocate (actobs(nrobs))		! the actual observations (missing data stripped out)
     allocate (obloc(nrobs))			! the locations of the actual observations in the full obs vector
 
-    call masks( nrobs , actobs , H , Hbase , obloc )
+    !call masks( nrobs , actobs , H , Hbase , obloc )
 
     !Compute the matrix HA, where H = measurement operator relating true model state to the observations d.
     HA = matmul( H , A )					! conversion from A to HA
@@ -144,7 +145,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
 
     ! Compute the measurement perturbations E
     do i = 1 , nrobs
-      call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+      !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
       R = R - mean( R ) ! subtract nonzero mean so that random observation errors have mean equal 0 and thus are not biased
       do k = 1, nrens
         E(i,k) = R(k) * sqrt( measvar( obloc( i ) ) )
@@ -173,7 +174,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     av_old = av
     if (analysis_AB .EQ. 1) Aold = A
 
-    call analysis( A , D , E , S , nrobs , x5 )  ! Ensemble Kalman Filter
+    !call analysis( A , D , E , S , nrobs , x5 )  ! Ensemble Kalman Filter
 
     ! restore ensemble values of non-analysis state variables
     if (analysis_AB .EQ. 1) then
@@ -188,7 +189,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     endif
     deallocate (D, HA, S, E, H, AvHa , avD , avE , avS , actobs , obloc )
 
-    if (analysis_AB == 1) call covariancemat( A , covmat , cormat )
+    !if (analysis_AB == 1) call covariancemat( A , covmat , cormat )
 
     func = ss / n * 1e6
 
@@ -256,7 +257,7 @@ lwork = 2 * max ( 3 * nrens + nrobs, 5 * nrens )
 allocate (work(lwork))
 sig=0.0
 
-call sgesvd ('S', 'N', nrobs, nrens, ES, nrobs, sig, U, nrobs, V, nrens, work, lwork, ierr) ! LAPACK routine
+!call sgesvd ('S', 'N', nrobs, nrens, ES, nrobs, sig, U, nrobs, V, nrens, work, lwork, ierr) ! LAPACK routine
 
 deallocate (work)
 !
@@ -297,12 +298,12 @@ deallocate(sig)
 !compute X2=X1*D
 allocate(X2(nrmin,nrens))
 !
-call sgemm('n' , 'n' , nrmin, nrens, nrobs, 1.0, X1, nrmin, D, nrobs, 0.0, X2, nrmin)	! BLAS routine
+!call sgemm('n' , 'n' , nrmin, nrens, nrobs, 1.0, X1, nrmin, D, nrobs, 0.0, X2, nrmin)	! BLAS routine
 
 deallocate(X1)
 
 !compute X3=U*X2
-call sgemm('n', 'n', nrobs, nrens, nrmin, 1.0, U, nrobs, X2, nrmin, 0.0, X3, nrobs)
+!call sgemm('n', 'n', nrobs, nrens, nrmin, 1.0, U, nrobs, X2, nrmin, 0.0, X3, nrobs)
 
 deallocate(U)
 deallocate(X2)
@@ -311,7 +312,7 @@ deallocate(X2)
 
 !compute X4=(HA')^T*X3
 allocate(X4(nrens,nrens))
-call sgemm('t', 'n', nrens, nrens, nrobs, 1.0 , S, nrobs, X3, nrobs, 0.0, X4, nrens)
+!call sgemm('t', 'n', nrens, nrens, nrobs, 1.0 , S, nrobs, X3, nrobs, 0.0, X4, nrens)
 
 !compute X5=X4+I (stored in X4)
 do i=1,nrens
@@ -325,16 +326,16 @@ if(ndim>2000)then
 !case with nrobs 'large'
 !compute A=A*X5
 	iblkmax=min(ndim,200)
-	call multa(A,X4,ndim,nrens,iblkmax)
+	!call multa(A,X4,ndim,nrens,iblkmax)
 	deallocate(X4)
 
 else
 !case with nrobs 'small'
 !compute representers Reps=A'*S^T
 	allocate (Reps(ndim,nrobs))
-	call sgemm('n', 't', ndim, nrobs, nrens, 1.0, A, ndim, S, nrobs, 0.0, Reps, ndim)
+	!call sgemm('n', 't', ndim, nrobs, nrens, 1.0, A, ndim, S, nrobs, 0.0, Reps, ndim)
 ! Compute A = A + Reps * X3
-	call sgemm('n', 'n', ndim, nrens, nrobs, 1.0, Reps, ndim, X3, nrobs, 1.0, A, ndim)
+	!call sgemm('n', 'n', ndim, nrens, nrobs, 1.0, Reps, ndim, X3, nrobs, 1.0, A, ndim)
 	deallocate(Reps)
 
 endif
@@ -578,7 +579,7 @@ implicit none
 real, intent(out) :: Hbase(ndim,maxobs)	! baseline observation operator
 
 Hbase = RESHAPE ((/&
-0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,1.,1.,0.,0.,0.,0.,0.,0. &
+0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.,0. &
 /), (/ndim, maxobs/))
 
 end subroutine obsop
@@ -957,7 +958,7 @@ end subroutine errors
 
       i = i + 1
 
-      call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+      !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
       R = R - mean( R )
       R = R / stddev( R )
 
