@@ -105,8 +105,6 @@ program main_spa
                  capac      = A( 26 , memb )
                  root_leaf_ratio  = A( 27 , memb )
               endif
-              !if (time%step .eq. 1) write(*,*) "vfb1: ", A(24:27,memb)
-              if (time%step .eq. 1) write(*,*) "vfb2: ", iota,gplant,capac,root_leaf_ratio
               call roots( A , memb )
               call timestep_calcs( A , B , memb , time )
               call transform_parameters( A , .true. , time , memb )

@@ -14,10 +14,10 @@ module enkf
   integer            :: switch						! 0=fitting parameters, 1=final filter
   integer            :: smooth = 0						! 0=no smooth, 1=smoothing
   integer            :: outon							! 0=low output, 1=high output
-  logical            :: forward       = .false.	! 0=assimilation, 1=forward run
+  logical            :: forward       = .true.	! 0=assimilation, 1=forward run
   logical            :: obserr_abs    = .true.  ! errors on obs absolute or percentual?
   logical            :: spurious_flag = .false. ! account for spurious correlation effects?
-  logical            :: modvarswitch  = .true. ! add model uncertainty?
+  logical            :: modvarswitch  = .false. ! add model uncertainty?
   logical            :: below_frac    = .false. ! belowground resistance a (fixed) fraction of total (i.e. below- + aboveground) resistance?
   logical            :: inflate_flag  = .false. ! inflate model parameters?
   logical            :: parallel_flag = .false. ! code parallelization activated?
