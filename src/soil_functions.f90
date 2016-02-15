@@ -330,7 +330,7 @@ contains
        overflow=0.
     endif
     runoff=runoff+overflow
-
+    
   end subroutine infiltrate
   !
   !--------------------------------------------------------------
@@ -436,12 +436,18 @@ contains
     pptgain    = 0.
 
     ! Re-calculate soil water..
+    ! bulky !
+    !old_waterfrac = waterfrac
+    !waterfrac = waterfrac * 0.139 + 0.129 ! adjusted by linear regression
     do slayer = 1 , core   ! loop over layers..
       conduc(slayer) = soil_conductivity( waterfrac(slayer) )
+      !conduc(slayer) = soil_conductivity( bulkwaterfrac(slayer) ) ! bulkwaterfrac?
     enddo
+    !waterfrac = old_waterfrac
     call soil_porosity
     call soil_water_potential
     call soil_resistance( A , m )
+    !waterfrac = bulkwaterfrac
 
     if ( ( ppt .gt. 0. ) .and. ( temp_top .lt. 0. ) ) then    ! add snowpack
        snow_watermm = snow_watermm + ppt
@@ -515,8 +521,8 @@ contains
     use hourscale
     use log_tools
     use math_tools !,         only: kmaxx, odeint
-    use scale_declarations, only: nmax
-    use soil_air,           only: drainlayer, liquid, slayer, soilpor, unsat
+    use scale_declarations, only: nmax,steps
+    use soil_air,           !only: drainlayer, liquid, slayer, soilpor, unsat
     use soil_structure
     use enkf, only: Prades, Vallcebre
 
@@ -529,7 +535,7 @@ contains
     integer,parameter :: nvar = 1
     integer           :: kmax !, kount, nbad, nok
     real              :: change, eps, h1, hmin, newwf, &
-                         x1, x2, ystart(nvar)
+                         x1, x2, ystart(nvar), drain, SHCmax
 
     !COMMON /path/ kmax, kount, dxsav, x, y
 
@@ -545,8 +551,8 @@ contains
     soilpor    = porosity( soil_layer )
     liquid     = waterfrac( soil_layer ) * ( 1. - iceprop( soil_layer ) )     ! liquid fraction
     drainlayer = field_capacity( soil_layer ) !* ( 1. - gravelvol( soil_layer ) )
-    if (Vallcebre) drainlayer = 0.001 ! 0.28 / ( 1. - gravelvol( soil_layer ) )
-    if (Prades) drainlayer = 0.2 !0.001 ! 0.1 / ( 1. - gravelvol( soil_layer ) ) !porosity( soil_layer ) * 0.24 ! threshold value of SWC until which gravitational drainage
+    !if (Vallcebre) drainlayer = 0.001 ! 0.28 / ( 1. - gravelvol( soil_layer ) )
+    if (Prades) drainlayer = 0.2 ! 0.1 / ( 1. - gravelvol( soil_layer ) ) !porosity( soil_layer ) * 0.24 ! threshold value of SWC until which gravitational drainage
         ! occurs is calculated as explained in calibration spreadsheet: soil porosity * fraction of soil porosity that is gravitationally retained
         ! for Prades winter SWC a few days after rainfall ~0.1 and porosity ~0.41: fraction = 0.1/0.41 = 0.24
         ! unsaturated volume of layer below (m3 m-2)..
@@ -558,9 +564,18 @@ contains
     if ( liquid .gt. 0. ) then
     !if ( ( liquid .gt. 0. ) .and. ( waterfrac( soil_layer ) .gt. drainlayer ) ) then
       ! there is liquid water..
-      ystart(1) = waterfrac( soil_layer )    ! total layer   
+      ystart(1) = waterfrac( soil_layer )   ! total layer   
+      !if (soil_layer==1) write(*,*) ystart(1)
       call odeint( ystart , nvar , x1 , x2 , eps , h1 , hmin , nok , nbad , soil_water_store )
       newwf  = ystart(1)
+      !stop
+      !drain = ( ( ( 1.+ log( ( max( 0.01 , waterfrac(soil_layer) ) ) / 0.3 ) ) ) * soil_conductivity( 0.4 ) * ( 24. * 3600. ) / real(steps) ) 
+      ! best so far: SHC(0.4), exponent=10.
+      !SHCmax = soil_conductivity( 0.4 ) * ( 24. * 3600. ) / real(steps)
+      !drain = ( ( max( 0.01 , waterfrac(soil_layer) ) / 0.21 ) ** 10. ) * SHCmax 
+      !drain = min( drain, unsat, liquid )
+      !newwf = waterfrac(soil_layer) - drain ! max(0., drain )
+      !if ((soil_layer==1).and.(newwf > 0.2)) write(*,*) newwf
       ! convert from waterfraction to absolute amount..
       change = ( waterfrac( soil_layer ) - newwf ) * thickness( soil_layer )
       watergain( soil_layer + 1 ) = watergain( soil_layer + 1 ) + change
@@ -598,8 +613,8 @@ contains
 
     numsecs  = ( 24. * 3600. ) / real(steps)
 
-    drainage = soil_conductivity( y(1) ) * numsecs ! unit: m s-1 * s = m
-    !if (Prades) drainage = drainage * 100.
+    drainage = soil_conductivity( y(1) ) * numsecs ! unit: m s-1 * s = m !adjusted!
+    if (Prades) drainage = drainage !* 100.
 
     if ( y(1) .le. drainlayer ) then  ! gravitational drainage above field_capacity 
        drainage = 0.
@@ -800,9 +815,8 @@ contains
         sapflow = max( 0. , baseobs(1) ) / 1000.
         totet = sapflow
     endif
-
     do i = 1 , rootl            ! water loss from each layer
-      waterloss( i ) = waterloss( i ) + totet * fraction_uptake( i ) * abovebelow
+       waterloss( i ) = waterloss( i ) + totet * fraction_uptake( i ) * abovebelow
     enddo
 
     do i = 1 , nos_soil_layers
@@ -815,8 +829,12 @@ contains
     call infiltrate
 
     ! Find SWP & soil resistance without updating waterfrac yet (do that in waterthermal)
+    ! bulky !
+    !old_waterfrac = waterfrac
+    !waterfrac = (waterfrac -0.129) / 0.139 !* 0.139 + 0.129 ! adjusted by linear regression
     call soil_water_potential
     call soil_resistance( A , m )
+    !waterfrac = old_waterfrac
 
     if ( time%step .eq. 1 ) then
       unintercepted = surface_watermm
@@ -844,7 +862,7 @@ contains
 
     ! local variables..
     integer :: i
-    real    :: evap, heat, heatgain, heatloss, icecontent, lambda, newheat, volhc, watercontent
+    real    :: evap, heat, heatgain, heatloss, icecontent, lambda, newheat, volhc, watercontent, dummy
 
     do i = 1 , nos_soil_layers    
       volhc = 2e6 * mineralfrac(i) + 2.5e6 * organicfrac(i) + &
@@ -859,7 +877,10 @@ contains
       icecontent     = ( waterfrac(i) *     iceprop(i)      ) * thickness(i)    ! Solid t or m of water
       ! now shift water content..
       watercontent   = max( 0. , watercontent + watergain(i) + pptgain( i ) - waterloss( i ) ) 
-      waterfrac( i ) = ( ( watercontent + icecontent ) / thickness( i ) )
+      waterfrac( i ) = ( ( watercontent + icecontent ) / thickness( i ) ) !* ( 1. - gravelvol( i ) )
+      !bulkwaterfrac( i ) = waterfrac( i ) * ( 1. - gravelvol( i ) )
+      !if ( time%step == 1 ) write(*,*) bulkwaterfrac( i )
+      !if (SWCobs .GT. -99) waterfrac( i ) = SWCobs
       if ( ( watercontent + icecontent ) .eq. 0 ) then
         iceprop(i) = 0.
         call write_log("water_thermal: iceprop is zero!" , msg_warning , __FILE__ , __LINE__ )
@@ -873,7 +894,7 @@ contains
         newheat     = heat - heatloss + heatgain
         volhc       = 2e6 * mineralfrac(i) + 2.5e6 * organicfrac(i)   &
                      + 4.2e6 * ( waterfrac(i) * ( 1. - iceprop(i) ) ) &
-                      + 1.9e6 * waterfrac(i) * iceprop(i)    ! volumetric heat capacity of soil layer, J m-3 K-1
+                     + 1.9e6 * waterfrac(i) * iceprop(i)    ! volumetric heat capacity of soil layer, J m-3 K-1
         soiltemp(i) = newheat / ( volhc * thickness(i) )
       endif
       watericemm(i) = 1e3 * waterfrac(i) * thickness(i)    !mm of water in layer
