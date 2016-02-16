@@ -90,7 +90,7 @@ contains
     real    :: psiet, bulkdensity ! new Saxton parameters
     logical :: densityswitch
 
-    SaxtonNew = .true. ! use new Saxton equations to calculate SWP and SHC
+    SaxtonNew = .true. ! use new Saxton equations to calculate SWP and SHC !bulky
     densityfactor = 1. ! density adjustment factor (0.9-1.3), <1 if density larger than estimated (e.g. compacted agricultural soil), and vice versa
     densityswitch = .false.    ! if densityfactor NE 1, then porosity and sand adjusted saturation have to be recalculated
     gravelpc = 0. ! volumetric decimal percentage of gravel
@@ -167,10 +167,12 @@ contains
          cond1(i) = 1930. * ( thetas - theta33 )**( 3. - lambda ) ! saturated conductivity of matric soil
          if (gravelpc > 0.) cond1(i) = cond1(i) * KbKs
          cond2(i) = thetas ! saturated moisture, or porosity
+       else
+         if (Prades) gravelvol(i) = 0.34
        endif ! end of if condition for SaxtonNew
 
     enddo ! end of loop over soil layers
-
+ 
   end subroutine saxton_parameters
   !
   !-------------------------------------------------------------------------------------!
@@ -190,12 +192,16 @@ contains
     ! arguments..
     real, intent(in) :: wf ! fraction of water in soils
     real :: alpha ! new Saxton parameter
+    real :: wf_adj !adjusted SWC!
 
-    if ( wf .lt. 0.001 ) then    ! Avoid floating-underflow fortran error
+    wf_adj = wf
+    !wf_adj = ( wf - 0.129 ) / 0.139 !wf * 0.139 + 0.129 ! bulky
+
+    if ( wf_adj .lt. 0.001 ) then    ! Avoid floating-underflow fortran error
       soil_conductivity = 1e-30
     else
-      soil_conductivity = cond1(slayer) * exp( cond2(slayer) + cond3(slayer) / wf ) ! Soil conductivity (m s-1 )
-      if (SaxtonNew) soil_conductivity = ( cond1(slayer) * ( wf / cond2(slayer) )**( 3 + ( 2. / lambda_Saxton ) ) ) / 1000. / 3600.
+      soil_conductivity = cond1(slayer) * exp( cond2(slayer) + cond3(slayer) / wf_adj ) ! Soil conductivity (m s-1 )
+      if (SaxtonNew) soil_conductivity = ( cond1(slayer) * ( wf_adj / cond2(slayer) )**( 3. + ( 2. / lambda_Saxton ) ) ) / 1000. / 3600.
       !if (Vallcebre) soil_conductivity = ( 10.**(-6) ) * ( (-SWP(slayer) )**(-0.092) )
     endif
 
@@ -209,7 +215,7 @@ contains
 
     use hydrol,             only: claypc, sandpc
     use scale_declarations, only: core
-    use soil_structure,     only: porosity, SaxtonNew
+    use soil_structure,     only: porosity, SaxtonNew, gravelvol
     use enkf,               only: Vallcebre, Prades
 
     implicit none
@@ -228,9 +234,12 @@ contains
         porosity(i) = H + J * sandpc(i) + K * log10( claypc(i) )
       end do
     endif
-
-    if (Vallcebre) porosity = 0.35 / (1. - 0.12) ! Vallcebre specific value!!! 0.49 and 0.465 = 0.4775
-    if (Prades) porosity = 0.65 !0.204 / ( 1. - 0.34 ) ! gravelvol = 0.34; 0.204 is observed max SWC for bulk (i.e. gravel corrected) soil
+    
+    !if (Vallcebre) porosity = 0.35 !/ (1. - gravelvol ) ! Vallcebre specific value!!! 0.49 and 0.465 = 0.4775
+    if (Prades) then
+       porosity = 0.65 !0.53 !/ ( 1. - gravelvol ) ! gravelvol = 0.34; 0.204 is observed max SWC for bulk (i.e. gravel corrected) soil
+       !porosity( 15 : core ) = 0.
+    endif
 
   end subroutine soil_porosity
 
@@ -269,7 +278,7 @@ contains
       else 
         rs  = sqrt( 1. / (rootlength(i) * pi ) )
         rs2 = log( rs / rootrad ) / ( 2.0 * pi * rootlength(i) * Lsoil * thickness(i) )
-        soilR1(i) = rs2 * 1E-6 * 18 * 0.001    ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
+        soilR1(i) = rs2 * 1E-6 * 18. * 0.001    ! convert from MPa s m2 m-3 to MPa s m2 mmol-1
         !second component of below ground resistance related to root hydraulics
         !rrcheck=rootresist/(rootmass(i)*thickness(i)/abovebelow)
         soilR2(i) = rootresist / ( rootmass(i) * thickness(i) / abovebelow )
@@ -287,7 +296,7 @@ contains
     ! waterthermal). Waterfrac is m3 m-3, soilwp is MPa.     !
 
     use soil_structure, only: potA, potB, rootl, SWP, waterfrac, SaxtonNew, theta33, psie, thetas
-    use enkf, only: Vallcebre, Prades
+    use enkf, only: Vallcebre, Prades, defoliated, nondefoliated
 
     implicit none
 
@@ -301,6 +310,10 @@ contains
         if ( ( SaxtonNew ) .and. ( soil_WP > -0.033 ) ) soil_WP = -0.001 * ( 33. - ( ( waterfrac(i) - theta33 ) * ( 33. - psie ) / ( thetas - theta33 ) ) ) ! linear equation for high SWPs
         if ( ( SaxtonNew ) .and. ( soil_WP > ( psie * -0.001 ) ) ) soil_WP = 0.
         !if (Vallcebre) soil_WP = -0.001 * 0.0005 * waterfrac(i)**(-8.525)
+        !if ( ( Prades ) .and. ( nondefoliated ) ) soil_WP = -1. * exp( 1. ) ** ( -1. * log( waterfrac( i ) ) * 0.759 - 2.006 ) ! bulky
+        !write (*,*) soil_WP
+        !stop
+        !if ( ( Prades ) .and. ( defoliated ) )    soil_WP = -1. * exp( 1. ) ** ( -1. * log( waterfrac( i ) ) * 0.759 - 2.006 - 0.128 )
       else
         soil_WP = -9999.
       endif
@@ -364,7 +377,7 @@ contains
        call write_log( 'The sum of uptake fraction is not (nearly) equal to 1 '&
                      //' in water_uptake_layer' , msg_warning , __FILE__ , __LINE__ )
     endif
-    if ( ( fraction_uptake(1) .gt. 1 ) .or. ( fraction_uptake(1) .lt. 0. ) ) then
+    if ( ( fraction_uptake(1) .gt. 1. ) .or. ( fraction_uptake(1) .lt. 0. ) ) then
        call write_log( 'Problem with the uptake fraction (either >1 or 0<)' , &
                        msg_warning , __FILE__ , __LINE__ )
     endif
@@ -412,7 +425,7 @@ contains
       ! field capacity is water content at which SWP = -10 kPa
       field_capacity( i ) = zbrent( water_retention_saxton_eqns , x1 , x2 , xacc )
     enddo
-
+    
   end subroutine water_retention
   !
   !--------------------------------------------------------------------
