@@ -119,7 +119,7 @@ contains
     to_mm_ts = time%seconds_per_step * 18. * .001 * .001 ! convert sapflow from mmol m-2 GA s-1 to mm m-2 GA ts-1
 
     ! water flux at base of trunk..
-    A( 22 , m ) = A( 22 , m ) + ( la * et * 1000. * to_mm_ts ) !+ ( ( layer_capac * dpsildt / ( time%seconds_per_step ) ) * to_mm_ts ) !(mm m-2 GA ts-1)
+    A( 22 , m ) = A( 22 , m ) + la * et * 1000. * to_mm_ts !+ layer_capac * dpsildt / ( time%seconds_per_step ) (mm m-2 GA ts-1)
     A( 23 , m ) = A( 23 , m ) + layer_capac * dpsildt / ( time%seconds_per_step ) * to_mm_ts ! capacitance component of sap flow (mm m-2 GA ts-1)
 
     !A( 22 , m ) = A( 22 , m ) + et * 18. * la ! transpiration component of sap flow (g m-2 s-1)

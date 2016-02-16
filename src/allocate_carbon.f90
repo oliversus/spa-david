@@ -248,7 +248,7 @@ contains
     else
        rootmass( 1 ) = rootbiomass / thickness(i)
     endif
-
+  
   end subroutine roots
   !
   !------------------------------

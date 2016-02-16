@@ -20,7 +20,7 @@ program main_spa
   use spa_io
   use spa_io_csv
   use enkf
-  use soil_structure , only: rootresist,SWCobs
+  use soil_structure , only: rootresist
   use soil_functions
   use veg !, only: gplant , minlwp , kappac , lafrac
   use clim
@@ -29,7 +29,7 @@ program main_spa
   use irradiance_sunshade
   use metab
   use meteo
-  !use omp_lib
+  use omp_lib
   use math_tools
 
   implicit none
@@ -44,18 +44,14 @@ program main_spa
   real,dimension(nos_canopy_layers) :: CSR,rsoilout,rplantout
   character(len=200) :: header
 
-  ! open SWC obs file
-  OPEN(UNIT=2810,FILE='input/Prades_SWC_gapfilled.csv',status='old')
-  !read(2810,*) header
-
   ! start logging..
   call open_log( unit=100 , fname="spa.log" )
 
   ! read user config, open files & initialise (spa_io.f90)
   call start_spa( iwater , A , B )
   do memb = 1 , nrens
-     call update_ensemble_variables( memb , .false. , frstrn , SWC , LWPout , &
-          LWPout_sd, update, runoff_out, BGtot, BG1, BG2 , CSR, rsoilout , rplantout )
+    call update_ensemble_variables( memb , .false. , frstrn , SWC , LWPout , &
+      LWPout_sd, update, runoff_out, BGtot, BG1, BG2 , CSR, rsoilout , rplantout )
   enddo
 
   ! set up observation operator for EnKF
@@ -77,9 +73,6 @@ program main_spa
         ! for each sub-daily slice...
         do step = 1 , user_opts%timesteps_per_day
 
-           read(2810,*) SWCobs
-           !write(*,*) SWCobs
-
            call increment_time( 'step' , time )
 
            ! get met driver and obs data for step (spa_io.f90)
@@ -91,31 +84,26 @@ program main_spa
 
            ! for each ensemble member
            do memb = 1 , nrens
-              call update_ensemble_variables( memb , .true. , frstrn , SWC , &
-                   LWPout , LWPout_sd , update , runoff_out, BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
-              call transform_parameters( A , .false. , time , memb )
-              ! A( 24 , memb ) = iota
-              ! A( 25 , memb ) = gplant
-              ! A( 26 , memb ) = capac
-              ! A( 27 , memb ) = root_leaf_ratio
-              !write(*,*) time%steps_count
-              if (time%steps_count .eq. 1) then
-                 iota       = A( 24 , memb )
-                 gplant     = A( 25 , memb )
-                 capac      = A( 26 , memb )
-                 root_leaf_ratio  = A( 27 , memb )
-              endif
-              call roots( A , memb )
-              call timestep_calcs( A , B , memb , time )
-              call transform_parameters( A , .true. , time , memb )
-              call update_ensemble_variables( memb , .false. , frstrn , SWC , &
-                   LWPout , LWPout_sd , update , runoff_out, BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
+             call update_ensemble_variables( memb , .true. , frstrn , SWC , &
+               LWPout , LWPout_sd , update , runoff_out, BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
+             call transform_parameters( A , .false. , time , memb )
+             A( 24 , memb ) = iota
+             A( 25 , memb ) = gplant
+             A( 26 , memb ) = capac
+             A( 27 , memb ) = root_leaf_ratio
+             !root_leaf_ratio  = A( 28 , memb )
+             !rbelow     = A( 29 , memb )
+             call roots( A , memb )
+             call timestep_calcs( A , B , memb , time )
+             call transform_parameters( A , .true. , time , memb )
+             call update_ensemble_variables( memb , .false. , frstrn , SWC , &
+               LWPout , LWPout_sd , update , runoff_out, BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
            enddo ! ends loop over ensemble members
 
            frstrn = .false.
            do memb = 1 , ndim
-              av(memb) = mean(A(memb,:))
-              as(memb) = stddev(A(memb,:))
+             av(memb) = mean(A(memb,:))
+             as(memb) = stddev(A(memb,:))
            enddo
 
            ! execute enkf routines (e.g. analysis + smoother) after timestep_calcs are finished
@@ -126,7 +114,7 @@ program main_spa
            !call handle_output( 1 , time , iwater=iwater )
            !call write_output_csv( time, iwater, user_opts%veg_is_deciduous , A )
            call write_enkf_output ( A , B , SWC , LWPout , LWPout_sd , runoff_out , &
-                BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
+             BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
            call write_log_div
 
         enddo ! ends loop over sub-daily slices
@@ -138,7 +126,7 @@ program main_spa
   enddo ! ends loop over years
 
   if ( smooth .eq. 1 ) then
-     !call smoothout()
+    call smoothout()
   endif
 
   ! finish logging..
@@ -151,7 +139,7 @@ contains
   subroutine increment_time( type , time )
 
     ! Method to update the time-holder variable. !
-
+  
     use scale_declarations,only: time_holder, user_opts
     use log_tools,         only: write_log
 
@@ -164,39 +152,39 @@ contains
 
     select case (type)
     case ('year')
-       ! new year, reset day & step..
-       time%year = time%year + 1
-       time%day  = 0
-       time%step = 0
-       write(message,*)'year is: ',time%year
-       call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+      ! new year, reset day & step..
+      time%year = time%year + 1
+      time%day  = 0
+      time%step = 0
+      write(message,*)'year is: ',time%year
+      call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
     case ('day')
-       ! new day, reset step...
-       time%day  = time%day + 1
-       time%step = 0
-       write(message,*)'day is: ',time%day
-       call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+      ! new day, reset step...
+      time%day  = time%day + 1
+      time%step = 0
+      write(message,*)'day is: ',time%day
+      call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
     case ('step')
-       ! next step
-       ! Also update the count of total-steps, and the daytime..
-       time%step = time%step + 1
-       write(message,*)'step-of-day is: ',time%step
-       call write_log( trim(message), msg_info , __FILE__ , __LINE__ )
-       time%steps_count = time%steps_count + 1
-       write(message,*)'number of steps so far is: ',time%steps_count
-       call write_log( trim(message), msg_info , __FILE__ , __LINE__ )
+      ! next step
+      ! Also update the count of total-steps, and the daytime..
+      time%step = time%step + 1
+      write(message,*)'step-of-day is: ',time%step
+      call write_log( trim(message), msg_info , __FILE__ , __LINE__ )
+      time%steps_count = time%steps_count + 1
+      write(message,*)'number of steps so far is: ',time%steps_count
+      call write_log( trim(message), msg_info , __FILE__ , __LINE__ )
 
-       ! Re-calculate the current time in units of days..
-       ! Consider step 1 to be at 00:00 on the day, and the
-       ! last step of the day to be at or before 23.59...
-       time%daytime = ( time%year -1 ) * user_opts%days_in_year    &
-            + time%day                                  &
-            + ( real(time%step) - 1 ) / real(user_opts%timesteps_per_day)
-       write(message,*)'daytime is: ',time%daytime
-       call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+    ! Re-calculate the current time in units of days..
+    ! Consider step 1 to be at 00:00 on the day, and the
+    ! last step of the day to be at or before 23.59...
+    time%daytime = ( time%year -1 ) * user_opts%days_in_year    &
+                    + time%day                                  &
+                     + ( real(time%step) - 1 ) / real(user_opts%timesteps_per_day)
+    write(message,*)'daytime is: ',time%daytime
+    call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
     case default
-       write(message,*)'Do not recognise type of update: ',type
-       call write_log( trim(message) , msg_warning , __FILE__ , __LINE__ )
+      write(message,*)'Do not recognise type of update: ',type
+      call write_log( trim(message) , msg_warning , __FILE__ , __LINE__ )
     endselect
 
   end subroutine increment_time

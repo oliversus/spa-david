@@ -270,6 +270,10 @@ contains
     call open_file( filename , 26 , readonly=.true. )
 
     read(26,*)dummy,(initmean(i),i=1,ndim)
+    read(26,*) iota
+    read(26,*) gplant
+    read(26,*) capac
+    read(26,*) root_leaf_ratio
     read(26,*)dummy,(modvar(i),i=1,ndim)
     read(26,*)dummy,(initerr(i),i=1,ndim)
     read(26,*)dummy,(obsvar(i),i=1,maxobs)

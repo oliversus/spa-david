@@ -171,17 +171,17 @@ contains
     iseed = (/188,2541,3560,4017/)
 
     do j = 1 , ndim
-      !call slarnv( 3, iseed, nrens, R )   ! random numbers
-      !R = R - mean( R )
-      !if ( stddev( R ) .ne. 0) R = R / stddev( R )
+      call slarnv( 3, iseed, nrens, R )   ! random numbers
+      R = R - mean( R )
+      if ( stddev( R ) .ne. 0) R = R / stddev( R )
       do i = 1 , nrens
-        !B( j , i ) = R( i ) ! B is a matrix with zero mean and unit variance in each row,
+        B( j , i ) = R( i ) ! B is a matrix with zero mean and unit variance in each row,
           ! used for analysing spurious correlations and estimating size of inflation parameter
         if( j .le. nsv ) then
-          A( j , i ) = initmean( j ) !+ R( i ) * initerr( j ) * initmean( j ) * modvarflag    ! state variables
+          A( j , i ) = initmean( j ) + R( i ) * initerr( j ) * initmean( j ) * modvarflag    ! state variables
         else
           if ((read_initial_distribution) .and. (j .lt. 29)) initmean( j ) = initial_parameters((j-nsv),i)
-          check = initmean( j ) !+ R( i ) * initerr( j ) * initmean( j ) * modvarflag ! parameters
+          check = initmean( j ) + R( i ) * initerr( j ) * initmean( j ) * modvarflag ! parameters
           !A( j , i ) = initmean( j ) + R( i ) * initerr( j ) * initmean( j ) * modvarflag ! parameters
           if ( check .lt. lo( j ) ) check = lo( j )  ! parameters to be within preset limits (lo/hi)
           if ( check .gt. hi( j ) ) check = hi( j )

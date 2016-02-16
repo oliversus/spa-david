@@ -155,7 +155,7 @@ contains
 
     use metab, only: ht, layer_capac, propresp, rn, rplant, rsoil, vcm, vjm , &
       rplant_canopy, rsoil_canopy
-    use meteo, only: la, nit, psil ! Olli added psil
+    use meteo, only: la, nit
     use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow
     use enkf
 
@@ -169,18 +169,6 @@ contains
     logical,intent(in) :: sun
     real :: illum_frac,layer_frac_soil_resistance
 
-    ! local variables added by Olli
-    real :: d, c, plant_conduct_max=20. ! added by Olli
-    
-    ! choose one of the following two lines for large or small trees, added by Olli
-    d = 2.4 ! large trees, added by Olli
-    ! d = 3.0 ! small trees, added by Olli
-
-    ! choose one of the following two lines for large or small trees, added by Olli
-    c = 2.8 ! large trees, added by Olli
-    ! c = 4.0 ! small trees, added by Olli
-    
-
     vcm = kappac * nit / la
     ! metabolic rates are umol/m2/s - so we assume here that nit is N/m2 (it's actually N/clayer)
     vjm = kappaj * nit / la
@@ -191,11 +179,9 @@ contains
 
     ! plant hydraulic resistances are determined by the amount of leaf area in the sunlit or shaded fraction
     if ( conductivity .eq. 1 ) then
-       ! rplant = ht / ( gplant * la )  ! MPa s mmol-1 (per layer); gplant is A( 25 ); deactivated by Olli
-       rplant = 1. / ( plant_conduct_max * exp( -( -psil/d)**c ) ) ! added by Olli
+       rplant = ht / ( gplant * la )  ! MPa s mmol-1 (per layer); gplant is A( 25 )
     else
-       ! rplant = 1. / ( gplant * la )  ! conductance is constant with height; gplant is A( 25 ); deactivated by Olli
-       rplant = 1. / ( plant_conduct_max * exp( -( -psil/d)**c ) ) ! added by Olli
+       rplant = 1. / ( gplant * la )  ! conductance is constant with height; gplant is A( 25 )
     endif
     layer_capac = capac * la
 

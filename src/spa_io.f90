@@ -15,12 +15,12 @@ module spa_io
   !! reading user-config and opening/reading input files. !!
 
   use scale_declarations, only: fname_length, user_opts
-  !use spa_io_netcdf,      only: nc_met_file
+  use spa_io_netcdf,      only: nc_met_file
 
   implicit none
 
   ! Not sure this is the right place to put this..
-  !type(nc_met_file),pointer,save :: met_nc
+  type(nc_met_file),pointer,save :: met_nc
 
   ! --- private to this module ---
 
@@ -89,7 +89,7 @@ contains
     use spa_config,         only: read_user_config, update_parameters_from_user_config
     use spa_initialise
     use spa_io_csv
-    !use spa_io_netcdf
+    use spa_io_netcdf
     use enkf
     use obsdrivers,         only: baseobs
 
@@ -104,28 +104,26 @@ contains
     real,dimension(ndim)         :: initmean ! initial mean values of ensemble state vector
     real,dimension(ndim)         :: initerr ! initial model error (or rather uncertainty)
 
-    real :: dummy
-
     ! Find out the config filename..
     call parse_spa_cmd_line( spa_config_filename )
 
     ! Read user's config file..
-    !allocate( met_nc, met_nc%header )
-    call read_user_config( spa_config_filename , user_opts , section_names , dummy) !met_nc )
+    allocate( met_nc, met_nc%header )
+    call read_user_config( spa_config_filename , user_opts , section_names , met_nc )
 
     ! Open the meteorology file..(but don't load any data from it yet)
     if ( user_opts%met_file_is_nc ) then
 
        ! load basic data associated with file...
        call write_log( "opening the NC meteorology input file" , msg_info , __FILE__ , __LINE__ )
-       !call open_nc_in( met_nc%header )
+       call open_nc_in( met_nc%header )
 
        ! ! Check latitude and longitude desired by user are inside bounds of this file..
        ! call write_log( "checking it contains the desired lat-lon" , msg_info , __FILE__ , __LINE__ )
        ! call check_LatLon( met_nc%header, met_nc%grid )
 
        ! Load all the meteorological data into the pointer..
-       !call load_met_nc_data( met_nc )
+       call load_met_nc_data( met_nc )
        call write_log_div
 
     else
@@ -266,7 +264,7 @@ contains
     use clim,               only: gdd, mint
     use scale_declarations, only: time_holder
     use spa_io_csv
-    !use spa_io_netcdf
+    use spa_io_netcdf
     use log_tools
     use enkf
 

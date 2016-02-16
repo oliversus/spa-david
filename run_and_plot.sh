@@ -11,6 +11,8 @@ cd ..
 R --vanilla --slave --args "figures/" FALSE FALSE "ndf" <./plot.R
 
 display output/figures/SWC.png &
+display ~/SPA/MonteCarlo/Prades_ndf/output/1/SWC.png &
+
 
 # argument 5: output figure directory
 # argument 6: SDE?
