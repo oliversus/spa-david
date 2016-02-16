@@ -957,7 +957,7 @@ end subroutine errors
 
       i = i + 1
 
-      call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+      !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
       R = R - mean( R )
       R = R / stddev( R )
 
