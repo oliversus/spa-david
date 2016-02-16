@@ -91,11 +91,11 @@ subroutine enkf_calcs ( A , B , time , hbase )
 
   !Read the ensemble forecast into A (matrix holding ensemble members)
   do i = 1 , ndim
-    call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
-    do k = 1 , nrens
-      sigma = sqrt( sigma2( i ) )
-      A( i , k ) = A( i , k ) + sqrt( dt ) * sigma * rho * R( k ) * modvarflag
-    enddo
+    !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+    ! do k = 1 , nrens
+    !   sigma = sqrt( sigma2( i ) )
+    !   A( i , k ) = A( i , k ) + sqrt( dt ) * sigma * rho * R( k ) * modvarflag
+    ! enddo
     R = R - mean( R ) ! remove non-zero mean from R, and scale stddev to 1 for creating B matrix
     R = R / stddev( R )
     do k = 1 , nrens
@@ -119,7 +119,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
 ! If there are observations for this timestep....
   if ( exist .gt. -999. ) then
 
-    call varobs( maxobs , nrobs ) ! determine number of observations this timestep
+    !call varobs( maxobs , nrobs ) ! determine number of observations this timestep
 
     if (spurious_flag) n_analysis = 2
 
@@ -136,7 +136,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     allocate (actobs(nrobs))		! the actual observations (missing data stripped out)
     allocate (obloc(nrobs))			! the locations of the actual observations in the full obs vector
 
-    call masks( nrobs , actobs , H , Hbase , obloc )
+    !call masks( nrobs , actobs , H , Hbase , obloc )
 
     !Compute the matrix HA, where H = measurement operator relating true model state to the observations d.
     HA = matmul( H , A )					! conversion from A to HA
@@ -144,7 +144,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
 
     ! Compute the measurement perturbations E
     do i = 1 , nrobs
-      call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
+      !call slarnv( 3, iseed, nrens, R ) !random numbers from a normal distribution
       R = R - mean( R ) ! subtract nonzero mean so that random observation errors have mean equal 0 and thus are not biased
       do k = 1, nrens
         E(i,k) = R(k) * sqrt( measvar( obloc( i ) ) )
@@ -173,7 +173,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     av_old = av
     if (analysis_AB .EQ. 1) Aold = A
 
-    call analysis( A , D , E , S , nrobs , x5 )  ! Ensemble Kalman Filter
+    !call analysis( A , D , E , S , nrobs , x5 )  ! Ensemble Kalman Filter
 
     ! restore ensemble values of non-analysis state variables
     if (analysis_AB .EQ. 1) then
@@ -188,7 +188,7 @@ subroutine enkf_calcs ( A , B , time , hbase )
     endif
     deallocate (D, HA, S, E, H, AvHa , avD , avE , avS , actobs , obloc )
 
-    if (analysis_AB == 1) call covariancemat( A , covmat , cormat )
+    !if (analysis_AB == 1) call covariancemat( A , covmat , cormat )
 
     func = ss / n * 1e6
 
@@ -256,7 +256,7 @@ lwork = 2 * max ( 3 * nrens + nrobs, 5 * nrens )
 allocate (work(lwork))
 sig=0.0
 
-call sgesvd ('S', 'N', nrobs, nrens, ES, nrobs, sig, U, nrobs, V, nrens, work, lwork, ierr) ! LAPACK routine
+!call sgesvd ('S', 'N', nrobs, nrens, ES, nrobs, sig, U, nrobs, V, nrens, work, lwork, ierr) ! LAPACK routine
 
 deallocate (work)
 !
@@ -297,12 +297,12 @@ deallocate(sig)
 !compute X2=X1*D
 allocate(X2(nrmin,nrens))
 !
-call sgemm('n' , 'n' , nrmin, nrens, nrobs, 1.0, X1, nrmin, D, nrobs, 0.0, X2, nrmin)	! BLAS routine
+!call sgemm('n' , 'n' , nrmin, nrens, nrobs, 1.0, X1, nrmin, D, nrobs, 0.0, X2, nrmin)	! BLAS routine
 
 deallocate(X1)
 
 !compute X3=U*X2
-call sgemm('n', 'n', nrobs, nrens, nrmin, 1.0, U, nrobs, X2, nrmin, 0.0, X3, nrobs)
+!call sgemm('n', 'n', nrobs, nrens, nrmin, 1.0, U, nrobs, X2, nrmin, 0.0, X3, nrobs)
 
 deallocate(U)
 deallocate(X2)
@@ -311,7 +311,7 @@ deallocate(X2)
 
 !compute X4=(HA')^T*X3
 allocate(X4(nrens,nrens))
-call sgemm('t', 'n', nrens, nrens, nrobs, 1.0 , S, nrobs, X3, nrobs, 0.0, X4, nrens)
+!call sgemm('t', 'n', nrens, nrens, nrobs, 1.0 , S, nrobs, X3, nrobs, 0.0, X4, nrens)
 
 !compute X5=X4+I (stored in X4)
 do i=1,nrens
@@ -325,16 +325,16 @@ if(ndim>2000)then
 !case with nrobs 'large'
 !compute A=A*X5
 	iblkmax=min(ndim,200)
-	call multa(A,X4,ndim,nrens,iblkmax)
+	!call multa(A,X4,ndim,nrens,iblkmax)
 	deallocate(X4)
 
 else
 !case with nrobs 'small'
 !compute representers Reps=A'*S^T
 	allocate (Reps(ndim,nrobs))
-	call sgemm('n', 't', ndim, nrobs, nrens, 1.0, A, ndim, S, nrobs, 0.0, Reps, ndim)
+	!call sgemm('n', 't', ndim, nrobs, nrens, 1.0, A, ndim, S, nrobs, 0.0, Reps, ndim)
 ! Compute A = A + Reps * X3
-	call sgemm('n', 'n', ndim, nrens, nrobs, 1.0, Reps, ndim, X3, nrobs, 1.0, A, ndim)
+	!call sgemm('n', 'n', ndim, nrens, nrobs, 1.0, Reps, ndim, X3, nrobs, 1.0, A, ndim)
 	deallocate(Reps)
 
 endif
