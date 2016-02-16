@@ -15,7 +15,7 @@ module spa_config
   !! runtime-configuration file for SPA.  !!
 
   use scale_declarations, only: fname_length
-  use spa_io_netcdf ! for the nc_met/nc_soils/nc_veg type definitions
+  !use spa_io_netcdf ! for the nc_met/nc_soils/nc_veg type definitions
 
   implicit none
 
@@ -26,13 +26,13 @@ contains
   !
   !----------------------------------------------------------------------------
   !
-  subroutine read_user_config( config_filename , config_options , section_names , met_nc )
+  subroutine read_user_config( config_filename , config_options , section_names , dummy )
 
     ! reads the user config, looking for the filenames !
     ! output dir and SPA configuration flags.          !
 
     use config_tools
-    use netcdf_tools
+    !use netcdf_tools
     use scale_declarations, only: fname_length, met, user_config_holder, time
     use log_tools
 
@@ -40,11 +40,12 @@ contains
     character(fname_length),intent(in) :: config_filename !(input)  where to look for the config file
     type(user_config_holder)           :: config_options  !(output) holds the user's config choices.
     type(ConfigSection), pointer       :: section_names   !(output) structure holding sections of the configuration file   
-    type(nc_met_file),pointer          :: met_nc          !(output)
+    !type(nc_met_file),pointer          :: met_nc          !(output)
+    real :: dummy
 
     ! local variables..
     type(ConfigSection), pointer :: section
-    type(nc_output), pointer     :: output
+    !type(nc_output), pointer     :: output
     logical                      :: exists, file_nc, ios
     integer                      :: i
     character(len=100)           :: outputdir1, outputdir2
@@ -128,11 +129,11 @@ contains
         call write_log( message , msg_fatal , __FILE__ , __LINE__ )
       endif
       call GetValue(section,'file_is_netcdf',config_options%met_file_is_nc)
-      if ( config_options%met_file_is_nc ) then
-        allocate( met_nc%header )
-        met_nc%header%name = config_options%met_filename
-        call get_met_nc_varnames_from_config( section , met_nc )
-      end if
+      !if ( config_options%met_file_is_nc ) then
+      !  allocate( met_nc%header )
+      !  met_nc%header%name = config_options%met_filename
+      !  call get_met_nc_varnames_from_config( section , met_nc )
+      !end if
       call GetValue( section , 'file_has_co2' ,  config_options%co2_in_met_file  )
       if ( .not. config_options%co2_in_met_file ) then 
         call write_log( "Using a constant CO2 concentration." , msg_info , __FILE__ , __LINE__ )
@@ -163,141 +164,141 @@ contains
   !
   !----------------------------------------------------------------------------
   !
-  function process_output(section, output)
+  !function process_output(section, output)
 
-    use config_tools
-    use log_tools
-    use netcdf_tools
+    !use config_tools
+    !use log_tools
+    !use netcdf_tools
 
-    implicit none
+    !implicit none
 
     ! arguments..
-    type(ConfigSection), pointer :: section
-    type(nc_output), pointer    :: output
+    !type(ConfigSection), pointer :: section
+    !type(nc_output), pointer    :: output
 
     ! local variables..
-    type(nc_output), pointer :: process_output
+    !type(nc_output), pointer :: process_output
 
-    process_output=>add_output(output)
+    !process_output=>add_output(output)
 
     ! get filename
-    allocate(process_output%header)
-    call GetValue(section,'filename',process_output%header%name)
-    call GetValue(section,'frequency',process_output%frequency)
+    !allocate(process_output%header)
+    !call GetValue(section,'filename',process_output%header%name)
+    !call GetValue(section,'frequency',process_output%frequency)
 
-    if (process_output%header%name(1:1).eq.' ') then
-      write(message,*)'Error, no filename specified [netCDF output]'
-       call write_log( message , msg_fatal , __FILE__ , __LINE__ )
-    end if  
+    !if (process_output%header%name(1:1).eq.' ') then
+    !  write(message,*)'Error, no filename specified [netCDF output]'
+    !   call write_log( message , msg_fatal , __FILE__ , __LINE__ )
+    !end if  
 
-  end function process_output
+  !end function process_output
   !
   !----------------------------------------------------------------------------
   !
-  function add_output(oc)
+  !function add_output(oc)
 
     ! add new element to linked list !
 
-    use netcdf_tools
+    !use netcdf_tools
 
-    implicit none
+    !implicit none
 
     ! arguments..
-    type(nc_output), pointer :: add_output ! function
-    type(nc_output), pointer :: oc
+    !type(nc_output), pointer :: add_output ! function
+    !type(nc_output), pointer :: oc
 
-    allocate(add_output)
+    !allocate(add_output)
 
-    if (associated(oc)) then
-       add_output%previous => oc
-       if (associated(oc%next)) then
-          add_output%next => oc%next
-          oc%next%previous => add_output
-       end if
-       oc%next => add_output
-    end if
+    !if (associated(oc)) then
+    !   add_output%previous => oc
+    !   if (associated(oc%next)) then
+    !      add_output%next => oc%next
+    !      oc%next%previous => add_output
+    !   end if
+    !   oc%next => add_output
+    !end if
 
-  end function add_output
+  !end function add_output
   !
   !----------------------------------------------------------------------------
   !
   !
   !----------------------------------------------------------------------------
   !
-  subroutine get_met_nc_varnames_from_config( section , met_nc )
+  !subroutine get_met_nc_varnames_from_config( section , met_nc )
 
     ! If the input met file is netcdf we need to check the !
     !  [Meteorology driver] section for details of what    !
     !  the variables are called in the met input file.     !
 
-    use config_tools
-    use log_tools
-    use scale_declarations, only: met, user_opts
-    use spa_io_netcdf,      only: nc_met_file
+    !use config_tools
+    !use log_tools
+    !use scale_declarations, only: met, user_opts
+    !use spa_io_netcdf,      only: nc_met_file
 
-    implicit none
+    !implicit none
 
     ! arguments..
-    type(ConfigSection),pointer :: section
-    type(nc_met_file),pointer   :: met_nc
+    !type(ConfigSection),pointer :: section
+    !type(nc_met_file),pointer   :: met_nc
 
     ! define default names for dimensions, and then go see if the user
     ! has given different ones...
     ! (I'm sure there should be a better way of doing this...)
-    allocate( met_nc%header%time   ) ; met_nc%header%time%name = 'time'
-    allocate( met_nc%header%lat    ) ; met_nc%header%lat%name  = 'lat'
-    allocate( met_nc%header%lon    ) ; met_nc%header%lon%name  = 'lon'
-    call GetValue( section, 'time',      met_nc%header%time%name   )
-    call GetValue( section, 'latitude',  met_nc%header%lat%name    )
-    call GetValue( section, 'longitude', met_nc%header%lon%name    )
+    !allocate( met_nc%header%time   ) ; met_nc%header%time%name = 'time'
+    !allocate( met_nc%header%lat    ) ; met_nc%header%lat%name  = 'lat'
+    !allocate( met_nc%header%lon    ) ; met_nc%header%lon%name  = 'lon'
+    !call GetValue( section, 'time',      met_nc%header%time%name   )
+    !call GetValue( section, 'latitude',  met_nc%header%lat%name    )
+    !call GetValue( section, 'longitude', met_nc%header%lon%name    )
 
     ! define default names for variables.. nd then go see if the user
     ! has given different ones...
     ! (I'm sure there should be a better way of doing this...)
-    allocate( met_nc%coa    ) ; met_nc%coa%name    = 'co2'
-    allocate( met_nc%par    ) ; met_nc%par%name    = 'par'
-    allocate( met_nc%ppt    ) ; met_nc%ppt%name    = 'ppt'
-    allocate( met_nc%sat    ) ; met_nc%sat%name    = 'temp'
-    allocate( met_nc%sfc_p  ) ; met_nc%sfc_p%name  = 'pressure'
-    allocate( met_nc%swrad  ) ; met_nc%swrad%name  = 'sw'
-    allocate( met_nc%vpd    ) ; met_nc%vpd%name    = 'vpd'
-    allocate( met_nc%windsp ) ; met_nc%windsp%name = 'windsp'
-    call GetValue( section, 'air_temperature',         met_nc%sat%name      )
-    call GetValue( section, 'temp_in_kelvin',          met_nc%sat_in_kelvin )
-    if ( user_opts%co2_in_met_file ) then
-      call GetValue( section, 'carbon_dioxide',        met_nc%coa%name      )
-    else
-      met_nc%coa%name = ''
-    endif
-    if ( user_opts%par_in_met_file ) then
-      call GetValue( section, 'photo_active_rad',       met_nc%par%name     )
-    else
-      met_nc%par%name = ''
-    endif
-    call GetValue( section, 'precipitation',           met_nc%ppt%name      )
-    call GetValue( section, 'precip_is_rate',          met_nc%ppt_is_rate   )
-    if ( user_opts%sfc_press_in_met_file ) then
-      call GetValue( section, 'surface_pressure',      met_nc%sfc_p%name    )
-    else
-      met_nc%sfc_p%name = ''
-      call GetValue(section,'constant_sfc_pressure',   met%const_sfc_pressure )
-    endif
-    call GetValue( section, 'sw_radiation',            met_nc%swrad%name    )
-    call GetValue( section, 'vapour_pressure_deficit', met_nc%vpd%name      )
-    call GetValue( section, 'wind_speed',              met_nc%windsp%name   )
+    !allocate( met_nc%coa    ) ; met_nc%coa%name    = 'co2'
+    !allocate( met_nc%par    ) ; met_nc%par%name    = 'par'
+    !allocate( met_nc%ppt    ) ; met_nc%ppt%name    = 'ppt'
+    !allocate( met_nc%sat    ) ; met_nc%sat%name    = 'temp'
+    !allocate( met_nc%sfc_p  ) ; met_nc%sfc_p%name  = 'pressure'
+    !allocate( met_nc%swrad  ) ; met_nc%swrad%name  = 'sw'
+    !allocate( met_nc%vpd    ) ; met_nc%vpd%name    = 'vpd'
+    !allocate( met_nc%windsp ) ; met_nc%windsp%name = 'windsp'
+    !call GetValue( section, 'air_temperature',         met_nc%sat%name      )
+    !call GetValue( section, 'temp_in_kelvin',          met_nc%sat_in_kelvin )
+    !if ( user_opts%co2_in_met_file ) then
+    !  call GetValue( section, 'carbon_dioxide',        met_nc%coa%name      )
+    !else
+    !  met_nc%coa%name = ''
+    !endif
+    !if ( user_opts%par_in_met_file ) then
+    !  call GetValue( section, 'photo_active_rad',       met_nc%par%name     )
+    !else
+    !  met_nc%par%name = ''
+    !endif
+    !call GetValue( section, 'precipitation',           met_nc%ppt%name      )
+    !call GetValue( section, 'precip_is_rate',          met_nc%ppt_is_rate   )
+    !if ( user_opts%sfc_press_in_met_file ) then
+    !  call GetValue( section, 'surface_pressure',      met_nc%sfc_p%name    )
+    !else
+    !  met_nc%sfc_p%name = ''
+    !  call GetValue(section,'constant_sfc_pressure',   met%const_sfc_pressure )
+    !endif
+    !call GetValue( section, 'sw_radiation',            met_nc%swrad%name    )
+    !call GetValue( section, 'vapour_pressure_deficit', met_nc%vpd%name      )
+    !call GetValue( section, 'wind_speed',              met_nc%windsp%name   )
 
-    call write_log("The variable names SPA is expecting to find in met nc file are:", &
-                     msg_info, __FILE__ , __LINE__ )
-    write(message,*) trim(met_nc%header%time%name),' ',trim(met_nc%header%lat%name),' ',trim(met_nc%header%lon%name)
-    call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
-    write(message,*) trim(met_nc%coa%name),' ',trim(met_nc%par%name),' ',  &
-                     trim(met_nc%ppt%name),' ',trim(met_nc%sat%name)
-    call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
-    write(message,*) trim(met_nc%sfc_p%name),' ',trim(met_nc%swrad%name),' ', &
-                     trim(met_nc%vpd%name),' ',trim(met_nc%windsp%name)
-    call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+    !call write_log("The variable names SPA is expecting to find in met nc file are:", &
+    !                 msg_info, __FILE__ , __LINE__ )
+    !write(message,*) trim(met_nc%header%time%name),' ',trim(met_nc%header%lat%name),' ',trim(met_nc%header%lon%name)
+    !call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+    !write(message,*) trim(met_nc%coa%name),' ',trim(met_nc%par%name),' ',  &
+    !                 trim(met_nc%ppt%name),' ',trim(met_nc%sat%name)
+    !call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
+    !write(message,*) trim(met_nc%sfc_p%name),' ',trim(met_nc%swrad%name),' ', &
+    !                 trim(met_nc%vpd%name),' ',trim(met_nc%windsp%name)
+    !call write_log( trim(message) , msg_info , __FILE__ , __LINE__ )
 
-  end subroutine get_met_nc_varnames_from_config
+  !end subroutine get_met_nc_varnames_from_config
   !
   !----------------------------------------------------------------------------
   !
