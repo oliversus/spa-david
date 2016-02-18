@@ -1,13 +1,3 @@
-###### NETCDF SETUP #######
-#
-NC_LIB_DIR=/usr/lib
-NC_INC_DIR=/usr/include
-LAPACK_LIB_DIR=/usr/lib/lapack
-BLAS_LIB_DIR=/usr/lib/libblas
-
-#NCFLAGS=-I$(NC_INC_DIR) -L$(NC_LIB_DIR) -L$(LAPACK_LIB_DIR) -L$(BLAS_LIB_DIR) -lnetcdff -lnetcdf -llapack -lblas
-#NCFLAGS=-I$(NC_INC_DIR) -L$(NC_LIB_DIR) -lnetcdff -lnetcdf
-
 ###############################
 
 ###### Compiler choice #####
@@ -16,20 +6,18 @@ BLAS_LIB_DIR=/usr/lib/libblas
 #
 FC = gfortran
 #for normal...
-#FCFLAGS = -cpp -ffree-line-length-none $(NCFLAGS)
+#FCFLAGS = -cpp -ffree-line-length-none 
 #for debugging...
-#FCFLAGS = -cpp -fbounds-check -fimplicit-none -ffree-line-length-none -frange-check -ftree-vectorizer-verbose=0 -ggdb -O0 -Wall $(NCFLAGS) -std=gnu -pedantic
+FCFLAGS = -cpp -fbounds-check -fimplicit-none -ffree-line-length-none -frange-check -ftree-vectorizer-verbose=0 -ggdb -O0 -Wall -std=gnu -pedantic
+#for profiling...
+#FCFLAGS = -cpp -p -g -ffree-line-length-none 
 
- FCFLAGS = -cpp -fbounds-check -fimplicit-none -ffree-line-length-none -frange-check -ftree-vectorizer-verbose=0 -ggdb -O0 -Wall -std=gnu -pedantic
-
-#for profiling...FCFLAGS = -cpp -p -g -ffree-line-length-none $(NCFLAGS)
-#
 # to use the intel compiler...
 #FC = ifort
 #for normal......
-#FCFLAGS = -fpp -vec-report=0 $(NCFLAGS)
-#for debugging...FCFLAGS = -fpp -check all -debug-parameters all -ftrapuv -g -fpe0 -implicitnone -O0 -p -stand f03 -traceback -vec-report=0 $(NCFLAGS) 
-#for profiling...FCFLAGS = -fpp -p -g $(NCFLAGS)
+#FCFLAGS = -fpp -vec-report=0 
+#for debugging...FCFLAGS = -fpp -check all -debug-parameters all -ftrapuv -g -fpe0 -implicitnone -O0 -p -stand f03 -traceback -vec-report=0 
+#for profiling...FCFLAGS = -fpp -p -g 
 #
 ##############################
 
@@ -39,7 +27,7 @@ spa_SOURCES = enkf.f90  enkf_declarations.f90  all_declarations.f90  allocate_ca
               spa_initialise.f90  spa_io.f90  spa_io_csv.f90 
 
 spa:	$(spa_SOURCES:%.f90=%.o)
-	$(FC) -i-dynamic -o $@ $^
+	$(FC) -o $@ $^
 	mv spa ../
 
 clean:
