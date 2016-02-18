@@ -204,6 +204,7 @@ module soil_structure
               KbKs,  & !
             thetas,  & !
      lambda_Saxton,  & !
+            SWCobs,  & !
      weighted_soilR    !
   real           :: abovebelow = 1.    ! saxton water retention equation are off by default
   real           :: rootdens   = 0.5e6 ! root density (g biomass m-3 root). Set as a constant value
@@ -305,7 +306,7 @@ module veg
   real            :: theta(16) !A(22),  & !
                    !theta(16)   !
   real      :: dimen    = 0.08 ! HF leaf dimension
-  real,dimension(nos_canopy_layers) :: LWPstore = 0. ! initial LWP=0.
+  real,dimension(nos_canopy_layers) :: LWPstore = 0., predawn_lwp = 0. ! initial LWP=0.
   real,dimension(nos_canopy_layers) :: &
                canopy_soil_resistance,  & !
                                  CSR1,  & !

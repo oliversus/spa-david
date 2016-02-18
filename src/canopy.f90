@@ -31,12 +31,12 @@ contains
     use leaf,                only: assimilate
     use light,               only: checkpar, leaf_sun, longem, nirabs, parabs_shade, parabs_sun, solar
     use meteo,               only: gbb, la, nit, par, psil, psis, rad, temp, wdef
-    use scale_declarations,  only: nos_canopy_layers, time_holder
+    use scale_declarations,  only: nos_canopy_layers, time_holder, steps
     use soil_air,            only: boundary
     use soil_functions,      only: soil_day
     use soil_structure,      only: weighted_SWP
-    use veg,                 only: avn, co2amb, gppt, lai, lafrac, lma, lwpstore, nfrac, &
-                                   nla, respt, totevap, totn, transt , totlai , flux, stom_conduct
+    use veg,                 only: avn, co2amb, gppt, lai, lafrac, lma, lwpstore, predawn_lwp, nfrac, &
+         nla, respt, totevap, totn, transt , totlai , flux, stom_conduct
     use enkf
 
     implicit none
@@ -49,21 +49,31 @@ contains
     ! local variables..
     integer :: i
     real    :: agr,frac_sh,frac_sun,ggppt,gsm,hold_psil,la_shade,la_sun,lambda, &
-               modet,res,shade_psil,sun_psil,totestevap,weighted_gs(nos_canopy_layers)
+         modet,res,shade_psil,sun_psil,totestevap,weighted_gs(nos_canopy_layers)
     real    :: dayint ! function to be called
     real    :: dummy1
     logical :: dummy2
     external dayint
     real,dimension(96,10) :: delete
-    logical :: sun
+    logical :: sun 
 
+    ! variables for calculating predawn LWP
+    !real :: predawn_lwp
+    logical :: set_predawn_lwp
+    integer :: predawn
+
+    predawn = steps / 24 * 6
     A( 22 , m ) = 0. ; A( 23 , m ) = 0. ! reset transpiration and capacitance for each timestep
-      ! (fluxes are cumulative over (non-)shaded leaf area and canopy layers)
+    ! (fluxes are cumulative over (non-)shaded leaf area and canopy layers)
 
-    if ( time%step .eq. 1 ) then
-      gppt   = 0.
-      respt  = 0.
-      transt = 0.
+    if ( time%step .eq. 1 ) then ! reset values at first timestep of given day
+       gppt   = 0.
+       respt  = 0.
+       transt = 0.
+    endif
+    set_predawn_lwp = .false.
+    if ((time%step .eq. predawn) .or. (time%steps_count .lt. predawn)) then
+       set_predawn_lwp = .true.
     endif
     lai    = lafrac * A( 8 , m ) / LMA   ! determine LAI distribution from Cf
     dummy1 = sum(lai)
@@ -83,6 +93,7 @@ contains
     if (m == 1) stom_conduct = 0.
     do i = 1 , nos_canopy_layers
        psil      = LWPstore( i )     ! load layer's LWP from previous timestep
+       !if (set_predawn_lwp) predawn_lwp = psil
        co2amb    = coa   ! load current CO2 concentration
        hold_psil = psil              ! store LWP 
        frac_sun  = leaf_sun( i )
@@ -97,7 +108,7 @@ contains
           temp = temp_top - 0.1111 * ( i - 1 ) * ( temp_top - temp_bot )
           wdef = wdtop - 0.1111 * ( i - 1 ) * ( wdtop - wdbot )
           gbb  = gbw(i)                    ! boundary layer
-          call set_leaf( i , frac_sun , A , m , sun )    ! see below
+          call set_leaf( i , frac_sun , A , m , sun , predawn_lwp(i) )    ! see below
           call assimilate( i , time , modet , agr , res , gsm , A , m )    ! see leaf.f90
           gppt(time%step)   = gppt(time%step)   + agr     ! umol CO2 assimilation m-2 ground area s-1
           respt(time%step)  = respt(time%step)  + res     ! umol CO2 respiration m-2 ground area s-1
@@ -107,6 +118,7 @@ contains
        endif
        sun_psil = psil         ! record LWP in sun leaves
        psil     = hold_psil    ! reset LWP for shade leaf calculation
+
        ! then do shaded leaf area
        frac_sh = ( 1. - leaf_sun(i) )
        la_shade = frac_sh * lai(i)
@@ -121,7 +133,7 @@ contains
           wdef = wdtop - 0.1111 * ( i - 1 ) * ( wdtop - wdbot )
           ! boundary layer
           gbb = gbw(i)
-          call set_leaf( i , frac_sh , A , m , sun )                    ! see below
+          call set_leaf( i , frac_sh , A , m , sun , predawn_lwp(i) )                    ! see below
           call assimilate( i , time , modet , agr , res , gsm , A , m )    ! see leaf.f90
           gppt(time%step)   = gppt(time%step)   + agr     ! umol CO2 assimilation m-2 ground area s-1
           respt(time%step)  = respt(time%step)  + res     ! umol CO2 respiration m-2 ground area s-1
@@ -131,6 +143,7 @@ contains
        endif
        shade_psil = psil    ! record LWP in shade leaves
        psil = frac_sun * sun_psil + frac_sh * shade_psil    ! calculate final LWP
+       if (set_predawn_lwp) predawn_lwp(i) = psil
        LWPstore(i) = psil
     enddo	! end loop over canopy layers
     ! ensemble average stomatal conductance per canopy layer
@@ -149,15 +162,16 @@ contains
   !
   !--------------------------------------------------------------------
   !
-  subroutine set_leaf( clayer , frac , A , m , sun )
+  subroutine set_leaf( clayer , frac , A , m , sun , predawn_lwp_set_leaf )
 
     ! sets Farquhar parameters and hydraulic parameters for each leaf layer
 
     use metab, only: ht, layer_capac, propresp, rn, rplant, rsoil, vcm, vjm , &
       rplant_canopy, rsoil_canopy
-    use meteo, only: la, nit
+    use meteo, only: la, nit, psil ! Olli added psil
     use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow
     use enkf
+    use scale_declarations
 
 
     implicit none
@@ -167,7 +181,20 @@ contains
     real,dimension(ndim,nrens),intent(inout) :: A
     integer,intent(in) :: m ! ensemble member subscript
     logical,intent(in) :: sun
+    real, intent(in) :: predawn_lwp_set_leaf
     real :: illum_frac,layer_frac_soil_resistance
+
+    ! local variables added by Olli
+    real :: d, c, plant_conduct_max=1.221185571 !added by Olli. This is David's value
+    
+    ! choose one of the following two lines for large or small trees, added by Olli
+    d = 0.3 !1.77328 ! large trees, added by Olli. These are David's values
+    !d = 2.4 ! small trees, added by Olli.
+
+    ! choose one of the following two lines for large or small trees, added by Olli
+    !c = 6.26082 ! large trees, added by Olli
+    c = 0.3 !2.8 ! small trees, added by Olli. These are David's values
+    
 
     vcm = kappac * nit / la
     ! metabolic rates are umol/m2/s - so we assume here that nit is N/m2 (it's actually N/clayer)
@@ -179,10 +206,13 @@ contains
 
     ! plant hydraulic resistances are determined by the amount of leaf area in the sunlit or shaded fraction
     if ( conductivity .eq. 1 ) then
-       rplant = ht / ( gplant * la )  ! MPa s mmol-1 (per layer); gplant is A( 25 )
+       !rplant = ht / ( gplant * la )  ! MPa s mmol-1 (per layer); gplant is A( 25 ); deactivated by Olli
+       rplant = 1./( plant_conduct_max * exp( -( -predawn_lwp_set_leaf/d)**c )*la) ! added by Olli
     else
-       rplant = 1. / ( gplant * la )  ! conductance is constant with height; gplant is A( 25 )
-    endif
+       !rplant = 1. / ( gplant * la )  ! conductance is constant with height; gplant is A( 25 ); deactivated by Olli
+       rplant = 1./( plant_conduct_max * exp( -( -predawn_lwp_set_leaf/d)**c )*la) ! added by Olli
+    endif  
+    
     layer_capac = capac * la
 
     rsoil = canopy_soil_resistance( clayer )  ! soil+root resistance of each canopy layer
