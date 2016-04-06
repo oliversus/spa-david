@@ -297,7 +297,7 @@ contains
     case (1)
       if ( user_opts%std_csv_output ) then
         if ( present( iwater ) ) then
-          !call write_output_csv( time, iwater, user_opts%veg_is_deciduous )
+          call write_output_csv( time, iwater, user_opts%veg_is_deciduous )
        else
           write(message,*)"When handle_output is called with flag=1 you MUST supply iwater."
           call write_log( trim(message), msg_fatal, __FILE__ , __LINE__ )

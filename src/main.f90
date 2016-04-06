@@ -112,7 +112,7 @@ program main_spa
            ! write output if needed (spa_io.f90)
            call write_log('Dealing with any output (if needed)' , msg_info , __FILE__ , __LINE__ )
            !call handle_output( 1 , time , iwater=iwater )
-           !call write_output_csv( time, iwater, user_opts%veg_is_deciduous , A )
+           call write_output_csv( time, iwater, user_opts%veg_is_deciduous , A )
            call write_enkf_output ( A , B , SWC , LWPout , LWPout_sd , runoff_out , &
              BGtot, BG1, BG2 , CSR , rsoilout , rplantout )
            call write_log_div

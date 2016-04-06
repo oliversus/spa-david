@@ -169,7 +169,7 @@ contains
     use metab, only: ht, layer_capac, propresp, rn, rplant, rsoil, vcm, vjm , &
       rplant_canopy, rsoil_canopy
     use meteo, only: la, nit, psil ! Olli added psil
-    use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow
+    use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow, rplant_layers
     use enkf
     use scale_declarations
 
@@ -208,9 +208,11 @@ contains
     if ( conductivity .eq. 1 ) then
        !rplant = ht / ( gplant * la )  ! MPa s mmol-1 (per layer); gplant is A( 25 ); deactivated by Olli
        rplant = 1./( plant_conduct_max * exp( -( -predawn_lwp_set_leaf/d)**c )*la) ! added by Olli
+       rplant_layers(clayer) = rplant
     else
        !rplant = 1. / ( gplant * la )  ! conductance is constant with height; gplant is A( 25 ); deactivated by Olli
        rplant = 1./( plant_conduct_max * exp( -( -predawn_lwp_set_leaf/d)**c )*la) ! added by Olli
+       rplant_layers(clayer) = rplant
     endif  
     
     layer_capac = capac * la

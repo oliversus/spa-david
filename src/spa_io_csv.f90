@@ -414,7 +414,7 @@ contains
 
     ! Open all output files..
     call open_file( trim(outdir)//'daily.csv', 30 , header = &
-         'daymm,modle,modess,modwet,SWP,rplant,CSRes,lsc,totalflux' )
+         'daymm,modle,modess,modwet,SWP,rplant1,rplant2,rplant3,rplant4,CSRes,lsc,totalflux,pLWP1,pLWP2,pLWP3,pLWP4,lai1,lai2,lai3,lai4' )
 
     if (decid_flag) then
       call open_file( trim(outdir)//'gdd.csv', 31 , header='time,gdd,mint' )
@@ -520,13 +520,14 @@ contains
     ! write to output files. HARD-CODED. !
 
     use clim,               only: daypar, dayppt, temp_bot, temp_top, wetev
+    use meteo,              only: la
     use hourscale,          only: canopy_store, discharge, runoff, unintercepted
     use irradiance_sunshade,only: check
     use scale_declarations, only: met, steps, time_holder
     use snow_info,          only: snow_watermm
     use soil_structure,     only: watericemm, weighted_swp
     use veg,                only: canopy_soil_resistance, conductivity, ess, flux, gplant, &
-                                  gppt, lai, layerht, prevC, soiletmm, totevap, transt !, A
+                                  gppt, lai, layerht, prevC, soiletmm, totevap, transt, predawn_lwp, rplant_layers
     use enkf
 
     implicit none
@@ -535,7 +536,7 @@ contains
     type(time_holder),intent(in) :: time
     real,intent(inout)           :: prevwater
     logical,intent(in)           :: decid_flag
-    real,dimension(ndim,nrens)   :: A
+    real,dimension(ndim,nrens),optional   :: A
 
     ! local variables..
 
@@ -607,8 +608,9 @@ contains
         lsc    = -999.
       endif
 
-      call write_to_file( 30, (/daymm,modle,modess,modwet,weighted_SWP,rplant,&
-                                 canopy_soil_resistance(2),lsc,totalflux/)    )
+      call write_to_file( 30, (/daymm,modle,modess,modwet,weighted_SWP,rplant_layers(1:4),&
+                                 canopy_soil_resistance(2),lsc,totalflux,&
+                                 predawn_lwp(1:4),lai(1:4)/)    )
       if (decid_flag) then
         ! deciduous stocks..
         call write_to_file( 70, (/Amean(8:10),Amean(14:15),Amean(18),Amean(21)/) )

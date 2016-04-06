@@ -306,7 +306,7 @@ module veg
   real            :: theta(16) !A(22),  & !
                    !theta(16)   !
   real      :: dimen    = 0.08 ! HF leaf dimension
-  real,dimension(nos_canopy_layers) :: LWPstore = 0., predawn_lwp = 0. ! initial LWP=0.
+  real,dimension(nos_canopy_layers) :: LWPstore = 0., predawn_lwp = 0., rplant_layers = 0. ! initial LWP=0.
   real,dimension(nos_canopy_layers) :: &
                canopy_soil_resistance,  & !
                                  CSR1,  & !
