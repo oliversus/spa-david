@@ -1,8 +1,8 @@
 *.mod
 *.o
-*.csv
 *.log
 *~
 make_dep
 spa
 *png
+output/
