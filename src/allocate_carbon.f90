@@ -33,7 +33,7 @@ contains
     use scale_declarations, only: steps, time_holder
     use soil_structure,     only: resprate, rootbiomass 
     use spa_io,             only: handle_output,user_opts
-    use veg,                only: theta , totlai , LMA , root_leaf_ratio !, A
+    use veg,                only: theta , totlai , LMA , root_leaf_ratio, species_ndf, species_df, species_qf !, A
     use enkf
 
     implicit none
@@ -50,6 +50,9 @@ contains
     ! Evergreen => 17 SVs = Ra,Af,Aw,Ar,Lf,Lw,Lr,Cf,Cw,Cr,Rh1,Rh2,D,Clit,Csom,G,Caresp
     ! Deciduous => 21 SVs = Ra,Af,Aw,Ar,Lf,Lw,Lr,Cf,Cw,Cr,Rh1,Rh2,D,Clit,Csom,G,
     !                                                   ET,Clab,Atolab,Afromlab,Caresp
+    
+    ! simulated leaf and root litter fluxes for quercus ilex
+    if (species_qf) phen_sim = .true.
 
     ts_length = 24. / real(steps)    ! length of time step in hours
 

@@ -36,7 +36,7 @@ contains
     use soil_functions,      only: soil_day
     use soil_structure,      only: weighted_SWP
     use veg,                 only: avn, co2amb, gppt, lai, lafrac, lma, lwpstore, predawn_lwp, nfrac, &
-         nla, respt, totevap, totn, transt , totlai , flux, stom_conduct
+         nla, respt, totevap, totn, transt , totlai , flux, stom_conduct, species_ndf, species_df, species_qf
     use enkf
 
     implicit none
@@ -51,8 +51,6 @@ contains
     real    :: agr,frac_sh,frac_sun,ggppt,gsm,hold_psil,la_shade,la_sun,lambda, &
          modet,res,shade_psil,sun_psil,totestevap,weighted_gs(nos_canopy_layers)
     real    :: dayint ! function to be called
-    real    :: dummy1
-    logical :: dummy2
     external dayint
     real,dimension(96,10) :: delete
     logical :: sun 
@@ -62,6 +60,7 @@ contains
     logical :: set_predawn_lwp
     integer :: predawn
 
+    if (species_qf) phen_sim = .true.
     predawn = steps / 24 * 6
     A( 22 , m ) = 0. ; A( 23 , m ) = 0. ! reset transpiration and capacitance for each timestep
     ! (fluxes are cumulative over (non-)shaded leaf area and canopy layers)
@@ -76,12 +75,7 @@ contains
        set_predawn_lwp = .true.
     endif
     lai    = lafrac * A( 8 , m ) / LMA   ! determine LAI distribution from Cf
-    dummy1 = sum(lai)
-    dummy1 = LMA
-    if (phen_sim .eqv. .false.) lai = lafrac * totlai
-    dummy1 = totlai
-    dummy1 = sum(lai)
-    dummy2 = phen_sim
+    if (.not. phen_sim) lai = lafrac * totlai
     totn   = avN * sum(lai)        ! total N
     Nla    = nfrac * totn          ! N per layer
     call boundary()

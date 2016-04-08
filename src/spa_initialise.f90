@@ -74,7 +74,7 @@ contains
                                   soil_water_potential, water_uptake_layer
     use soil_structure,     only: conduc, rootl, rootlength, rootmass, SWP, waterfrac, weighted_SWP
     use veg,                only: ess, flux, gppt, lafrac, lai, layerht, LMA, &
-                                  LWPstore, respt, soiletmm, transt
+                                  LWPstore, respt, soiletmm, transt, species_qf, initial_Cf, initial_Cr, initial_Cw
     use enkf
     use math_tools
 
@@ -108,7 +108,10 @@ contains
     rootl      = core
 
     do memb = 1 , nrens
-      if ( A( 8 , memb ) .eq. 0. ) A( 8 , memb ) = 0.1
+       if (species_qf) A( 8  , memb) = initial_Cf
+       if (species_qf) A( 9  , memb) = initial_Cw
+       if (species_qf) A( 10 , memb) = initial_Cr
+       if ( A( 8 , memb ) .eq. 0. ) A( 8 , memb ) = 0.1
     enddo
     lai        = lafrac * mean( A( 8 , : ) ) / LMA
 

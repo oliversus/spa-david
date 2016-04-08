@@ -282,6 +282,9 @@ module veg
   integer :: nlink        = 1  !
   integer :: conductivity = 1  ! 1=>conductivity set, 0=>conductance set
   real         :: altitude,  & !
+                 initial_Cf, &
+                 initial_Cw, &
+                 initial_Cr, &
                        avN,  & !
                      canht,  & !
                      capac,  & !
