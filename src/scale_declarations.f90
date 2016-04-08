@@ -77,6 +77,7 @@ module scale_declarations
      real    :: longitude         = 00.00  ! 0--360. -ve not recognised.
      integer :: timesteps_per_day = steps     ! User can control whether there are more/less steps per day..
      integer :: days_in_year      = 365    ! number of (whole!) days per year
+     character(fname_length) :: species = ''
      integer :: nos_of_years      = 1      ! number of years to simulate
      logical :: co2_in_met_file   = .False.! whether or not CO2 is in the input met file
      logical :: par_in_met_file   = .False.! likewise for PAR.
