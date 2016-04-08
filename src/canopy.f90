@@ -36,7 +36,7 @@ contains
     use soil_functions,      only: soil_day
     use soil_structure,      only: weighted_SWP
     use veg,                 only: avn, co2amb, gppt, lai, lafrac, lma, lwpstore, predawn_lwp, nfrac, &
-         nla, respt, totevap, totn, transt , totlai , flux, stom_conduct, species_ndf, species_df, species_qf
+         nla, respt, totevap, totn, transt , totlai , flux, stom_conduct, species_ndf, species_df, species_qi
     use enkf
 
     implicit none
@@ -60,7 +60,7 @@ contains
     logical :: set_predawn_lwp
     integer :: predawn
 
-    if (species_qf) phen_sim = .true.
+    if (species_qi) phen_sim = .true.
     predawn = steps / 24 * 6
     A( 22 , m ) = 0. ; A( 23 , m ) = 0. ! reset transpiration and capacitance for each timestep
     ! (fluxes are cumulative over (non-)shaded leaf area and canopy layers)

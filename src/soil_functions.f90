@@ -769,6 +769,7 @@ contains
     use soil_structure
     use enkf
     use obsdrivers
+    use veg, only: species_ndf, species_df, species_qi
 
     implicit none
 
@@ -801,8 +802,9 @@ contains
     totet = max( 0. , totet )
     if (Prades) then
         sapflow = 0.
-        if (defoliated)    sapflow = ( max( 0. , sap_ndf ) + max( 0. , sap_oak ) ) / 1000. ! converted from mm ts-1 to m3 ts-1, as totet
-        if (nondefoliated) sapflow = ( max( 0. , sap_df  ) + max( 0. , sap_oak ) ) / 1000.
+        if (species_df)    sapflow = ( max( 0. , sap_ndf ) + max( 0. , sap_oak ) ) / 1000. ! converted from mm ts-1 to m3 ts-1, as totet
+        if (species_ndf) sapflow = ( max( 0. , sap_df  ) + max( 0. , sap_oak ) ) / 1000.
+        if (species_qi) sapflow = ( max( 0. , sap_df  ) + max( 0. , sap_ndf ) ) / 1000.
         if (measured_sapflow) then ! model transpiration is set to observed value
             sapflow = ( max( 0. , sap_df  ) + max( 0. , sap_ndf ) + max( 0. , sap_oak ) ) / 1000.
             totet = sapflow

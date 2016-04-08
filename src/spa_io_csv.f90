@@ -226,11 +226,11 @@ contains
       read(unit=25,fmt=*)header,theta(10)           ! tar       turnover rate of autotrophic respiration pool
     endif
     read(unit=25,fmt=*)header, dummy !A(8)                  ! Cf
-    if (species_qf) initial_Cf = dummy
+    if (species_qi) initial_Cf = dummy
     read(unit=25,fmt=*)header, dummy !A(9)                  ! Cw
-    if (species_qf) initial_Cw = dummy
+    if (species_qi) initial_Cw = dummy
     read(unit=25,fmt=*)header, dummy !A(10)                 ! Cr
-    if (species_qf) initial_Cr = dummy
+    if (species_qi) initial_Cr = dummy
     read(unit=25,fmt=*)header, dummy !A(14)                 ! Clit
     read(unit=25,fmt=*)header, dummy !A(15)                 ! Csom
     if (decid_flag) then

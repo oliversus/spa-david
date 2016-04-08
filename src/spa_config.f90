@@ -15,7 +15,7 @@ module spa_config
   !! runtime-configuration file for SPA.  !!
 
   use scale_declarations, only: fname_length
-  use veg, only: species_ndf, species_df, species_qf
+  use veg, only: species_ndf, species_df, species_qi
   !use spa_io_netcdf ! for the nc_met/nc_soils/nc_veg type definitions
 
   implicit none
@@ -72,11 +72,11 @@ contains
       call GetValue(section,'longitude_deg_east',config_options%longitude        )
       call GetValue(section,'species'           ,config_options%species          )
       if (config_options%species(1:3) == "ndf") then
-         species_ndf = .true. ; species_df = .false.; species_qf = .false.         
+         species_ndf = .true. ; species_df = .false.; species_qi = .false.         
       else if (config_options%species(1:2) == "df") then
-         species_ndf = .false.; species_df = .true. ; species_qf = .false.
+         species_ndf = .false.; species_df = .true. ; species_qi = .false.
       else if (config_options%species(1:2) == "qi") then
-         species_ndf = .false.; species_df = .false.; species_qf = .true.
+         species_ndf = .false.; species_df = .false.; species_qi = .true.
       else
          write(*,*) "Please define a species to simulate (ndf, df, or qf) in config file"; STOP
       endif      

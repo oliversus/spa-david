@@ -278,7 +278,7 @@ module veg
 
   implicit none
 
-  logical :: species_ndf, species_df, species_qf
+  logical :: species_ndf, species_df, species_qi
   integer :: nlink        = 1  !
   integer :: conductivity = 1  ! 1=>conductivity set, 0=>conductance set
   real         :: altitude,  & !
