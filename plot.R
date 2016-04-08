@@ -429,7 +429,36 @@ MDo = foo$wppnd.md; MDo = MDo[foo$Year == year]
 tMDo = time[complete.cases(MDo)];
 tMDo = ISOdate(year,1,1)+tMDo*60*60*24
 MDo = MDo[complete.cases(MDo)]
+
+ylim = c(-4.,0.)
 }
+
+if (stream == "df"){
+PDo = foo$wppd.pd; PDo = PDo[foo$Year == year]
+tPDo = time[complete.cases(PDo)]; tPDo = ISOdate(year,1,1)+tPDo*60*60*24
+PDo = PDo[complete.cases(PDo)]
+
+MDo = foo$wppd.md; MDo = MDo[foo$Year == year]
+tMDo = time[complete.cases(MDo)];
+tMDo = ISOdate(year,1,1)+tMDo*60*60*24
+MDo = MDo[complete.cases(MDo)]
+
+ylim = c(-4.,0.)
+}
+
+if (stream == "qi"){
+PDo = foo$wpq.pd; PDo = PDo[foo$Year == year]
+tPDo = time[complete.cases(PDo)]; tPDo = ISOdate(year,1,1)+tPDo*60*60*24
+PDo = PDo[complete.cases(PDo)]
+
+MDo = foo$wpq.md; MDo = MDo[foo$Year == year]
+tMDo = time[complete.cases(MDo)];
+tMDo = ISOdate(year,1,1)+tMDo*60*60*24
+MDo = MDo[complete.cases(MDo)]
+
+ylim = c(-6.,0.)
+}
+
 if (png) png(paste(figdir, "LWP.png", sep=""), wi=wi, he=he, units="px", poi=20)
 par(mfrow=c(2,3), mar=c(2, 4, 2, 1), cex=1)
 
@@ -457,7 +486,7 @@ if (i == nfiles){
 
 cex = 1.5
 xlim = c(ISOdate(year,1,1),ISOdate(year,12,31))
-plot(tPDo, PDo, pch=16, ylim=c(-4.,0.), main = filenames[i], xlim = xlim,
+plot(tPDo, PDo, pch=16, ylim=ylim, main = filenames[i], xlim = xlim,
      xlab="", ylab="leaf water potential [MPa]", cex=cex)
 points(tMDo, MDo, pch=17, cex=cex)
 points(tPDo, PDm, pch=21, bg="red", cex=cex)
