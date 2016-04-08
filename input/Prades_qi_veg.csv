@@ -15,7 +15,7 @@ CONDUCTIVITY,0,,,Is tree conductivity defined (=1) is is tree,nostra conductance
 KappaC,18.86,,,Rate coefficient for Vcmax,Dominik,Sperlich,,,,,,,,
 KappaJ,35.02,,,Rate coefficient for Jmax,Dominik,Sperlich,,,,,,,,
 LMA,68.3,,,Leaf C per area,Ogaya2006,,,,,,,,,
-root_leaf_ratio,17.5,Helmissari,,,,,,,,,,,0.89,
+root_leaf_ratio,0.175,Helmissari,,,,,,,,,,,0.89,
 Max_depth,1,,,Maximum root depth (m),rod? et al,,,,,,,,,1
 root_k,82.3,,,Root biomass to reach 50% of max depth (g m-2),,,,,,,,,,
 dc,2.85388127853881E-005,theta(1,0,decomposition rate (/hr),,,,,,,,,,
