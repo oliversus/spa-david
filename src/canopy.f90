@@ -163,7 +163,7 @@ contains
     use metab, only: ht, layer_capac, propresp, rn, rplant, rsoil, vcm, vjm , &
       rplant_canopy, rsoil_canopy
     use meteo, only: la, nit, psil ! Olli added psil
-    use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow, rplant_layers
+    use veg,   only: canopy_soil_resistance, capac, conductivity, gplant, kappac, kappaj, layerht, rbelow, rplant_layers, species_ndf, species_df, species_qi
     use enkf
     use scale_declarations
 
@@ -182,13 +182,18 @@ contains
     real :: d, c, plant_conduct_max=1.221185571 !added by Olli. This is David's value
     
     ! choose one of the following two lines for large or small trees, added by Olli
-    d = 0.3 !1.77328 ! large trees, added by Olli. These are David's values
-    !d = 2.4 ! small trees, added by Olli.
-
-    ! choose one of the following two lines for large or small trees, added by Olli
-    !c = 6.26082 ! large trees, added by Olli
-    c = 0.3 !2.8 ! small trees, added by Olli. These are David's values
-    
+    if (species_ndf) then
+       d = 0.3
+       c = 0.3
+    endif
+    if (species_df) then
+       d = 0.3
+       c = 0.3
+    endif
+    if (species_qi) then
+       d = 0.3
+       c = 0.3
+    endif
 
     vcm = kappac * nit / la
     ! metabolic rates are umol/m2/s - so we assume here that nit is N/m2 (it's actually N/clayer)
