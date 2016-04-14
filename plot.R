@@ -149,7 +149,7 @@ foo = pnum(n+1, n)
 if (png) png(paste(figdir, "fluxes.png", sep=""), wi=wi, he=he, units="px", poi=20)
 par(mfrow=c(4,4), mar=c(2, 4, 2, 1), cex=.5)
 for (i in 2:dim(vars)[2]){
-  ylim = range(c(vars[,i] - sdev[,i] * err, vars[,i] + sdev[,i] * err))
+  ylim = range(c(vars[,i] - sdev[,i] * err, vars[,i] + sdev[,i] * err), na.rm=T)
   if (type[i]=="f" ) {
     plot(time, vars[,i], pch=20, cex=0.5, xlab="", ylab=dimnames(vars)[[2]][i], ty="n", ylim=ylim)
     if (err == 1) arrows(time, vars[,i] - sdev[,i], time, vars[,i] + sdev[,i], col="grey", angle=90., length = 0., code=3, lwd=2.)
@@ -162,7 +162,7 @@ if (png) dev.off()
 if (png) png(paste(figdir, "stocks.png", sep=""), wi=wi, he=he, units="px", poi=20)
 par(mfrow=c(2,3), mar=c(2, 4, 2, 1), cex=1)
 for (i in 2:dim(vars)[2]){
-  ylim = range(c(vars[,i] - sdev[,i] * err, vars[,i] + sdev[,i] * err))
+  ylim = range(c(vars[,i] - sdev[,i] * err, vars[,i] + sdev[,i] * err), na.rm=T)
   if (type[i]=="s" ) {
     plot(time, vars[,i], pch=20, cex=0.5, xlab="", ylab=dimnames(vars)[[2]][i], ty="n", ylim=ylim)
     if (err == 1) arrows(time, vars[,i] - sdev[,i], time, vars[,i] + sdev[,i], col="grey", angle=90., length = 0., code=3, lwd=2.)
@@ -202,7 +202,7 @@ if (png) dev.off()
 # plot NEE and error bars
 if (png) png(paste(figdir, "NEE.png", sep=""), wi=wi, he=he, units="px", poi=20)
 par(cex=1)
-ylim = range(c(filterd$NEE - sdd$NEE, filterd$NEE + sdd$NEE))
+ylim = range(c(filterd$NEE - sdd$NEE, filterd$NEE + sdd$NEE), na.rm=T)
 plot(timed, filterd$NEE, ty="n", ylim = ylim)
 arrows(timed, filterd$NEE - sdd$NEE, timed, filterd$NEE + sdd$NEE, col="grey", angle=90., length = 0.05, code=3, lwd=2.)
 points(timed, filterd$NEE, pch=20, cex=1., ty="b", lwd=1.5)
@@ -268,7 +268,9 @@ if (sde) foo[foo < 0.01] = 0.
 #  end = start+364
 #  bar[start:end] = cumsum(bar[start:end])
 #}
-ylim = range(c(0,cumsum(foo),cumsum(bar),cumsum(bar)+cumsum(barsd),cumsum(bar)-cumsum(barsd)))
+ylim =
+range(c(0,cumsum(foo),cumsum(bar),cumsum(bar)+cumsum(barsd),cumsum(bar)-cumsum(barsd)),
+na.rm=T)
 plot(timeh, cumsum(foo), ty="l", lwd=3, lty=2, ylab="transpiration [mm]",ylim=ylim,xlab="")
 lines(timeh, cumsum(bar), lwd=3)
 lines(timeh, cumsum(bar)+cumsum(barsd), lwd=3, col="grey")
